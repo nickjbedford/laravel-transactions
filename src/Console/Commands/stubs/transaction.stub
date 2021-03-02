@@ -1,6 +1,7 @@
 <?php
 	namespace DummyNamespace;
 
+	use Throwable;
 	use YetAnother\Laravel\Transaction;
 
 	class DummyClass extends Transaction
