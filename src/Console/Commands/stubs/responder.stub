@@ -1,0 +1,29 @@
+<?php
+	namespace DummyNamespace;
+	
+	use Exception;
+	use Illuminate\Http\Request;
+	use Symfony\Component\HttpFoundation\Response;
+	use YetAnother\Laravel\Http\TransactionResponder;
+	use YetAnother\Laravel\Transaction;
+	
+	class DummyClass extends TransactionResponder
+	{
+		/**
+		 * @inheritDoc
+		 */
+		protected function getResponseAfterExecution(Transaction $transaction): Response
+		{
+			return response()->json([
+				//
+			]);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		protected function createTransaction(Request $request): Transaction
+		{
+			throw new Exception('Not yet implemented.');
+		}
+	}

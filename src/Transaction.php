@@ -58,13 +58,14 @@
 		}
 
 		/**
+		 * Performs the transaction after validation.
 		 * @throws Throwable
 		 */
 		protected abstract function perform(): void;
 
 		/**
 		 * Optionally validates the action before it is performed.
-		 * @throws
+		 * @throws Throwable
 		 */
 		protected function validate(): void
 		{

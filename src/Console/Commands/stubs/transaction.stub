@@ -1,0 +1,45 @@
+<?php
+	namespace DummyNamespace;
+
+	use YetAnother\Laravel\Transaction;
+
+	class DummyClass extends Transaction
+	{
+		protected ?string $event = null;
+
+	    /**
+	     * Create a new transaction instance.
+	     * @return void
+	     */
+	    public function __construct()
+	    {
+			//
+	    }
+
+		/**
+		 * @throws Throwable
+		 */
+		protected function perform(): void
+		{
+			//
+		}
+
+		/**
+		 * Optionally validates the action before it is performed.
+		 * @throws Throwable
+		 */
+		protected function validate(): void
+		{
+			//
+		}
+
+		/**
+		 * This method handles the cleanup of the action's side effects
+		 * if the action fails during a transaction. External data or
+		 * changes, such as uploaded files, should be removed or reversed.
+		 */
+		public function cleanupAfterFailure(): void
+		{
+			//
+		}
+	}

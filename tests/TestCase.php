@@ -9,6 +9,7 @@
 	
 	use Illuminate\Support\Facades\Event;
 	use Orchestra\Testbench\TestCase as OrchestraTestCase;
+	use YetAnother\Laravel\Providers\TransactionsServiceProvider;
 	use YetAnother\Tests\Events\TransactionFired;
 	use YetAnother\Tests\Events\TransactionFiredListener;
 	
@@ -24,5 +25,12 @@
 		    ]);
 		    
 		    Event::listen(TransactionFired::class, TransactionFiredListener::class);
+		}
+		
+		protected function getPackageProviders($app): array
+		{
+			return [
+				TransactionsServiceProvider::class
+			];
 		}
 	}

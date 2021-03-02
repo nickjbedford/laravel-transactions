@@ -48,38 +48,72 @@ or changes to external services, this method should be overridden
 to do so. The subclass should maintain a list of reversible actions
 it may need to take, such as file paths to delete on failure.
 
-## Example
+## Transaction Example
 
 ```php
-use Symfony\Component\HttpFoundation\File\File;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use YetAnother\Laravel\Transaction;
+use App\Models\Attachment;
 
-class FileUploadTransaction extends Transaction
+/**
+ * Represents a transaction that must upload a file to a
+ * storage destination and update the database.
+ */
+class UploadAttachmentTransaction extends Transaction
 {
-    private ?File $uploadedFile = null;
+    private ?string $uploadedFilePath = null;
     private UploadedFile $file;
+    
+    public ?Attachment $model = null;
     
     public function __construct(UploadedFile $file)
     {
         $this->file = $file;
     }
     
+    /**
+     * Uploads the file to Amazon S3 then creates an
+     * Attachment model in the database.
+     * @throws Exception
+     */
     protected function perform() : void
     {
-        $this->uploadedFile = $this->file->move('some/path/to', 'uploaded.file');
-        
-        // update database regarding file upload
-        
-        throw new Exception('Something failed after uploading the file.');
+        $this->uploadFileToS3();
+        $this->createAttachment();
     }
     
+    protected function uploadFileToS3(): void
+    {
+        $path = 'some/path/to/' . $this->file->getClientOriginalName();
+        $s3 = Storage::disk('s3');
+        
+        if ($s3->put($this->file, $path))
+            {$this->uploadedFilePath = $path;}
+    }
+    
+    protected function createAttachment(): void
+    {
+        $this->model = Attachment::create([
+            'disk' => 's3',
+            'path' => $this->uploadedFilePath
+        ]);
+    }
+    
+    /**
+     * Deletes the file from S3 if any processes afterwards
+     * failed. The database transaction has already been rolled
+     * back at this time. 
+     */
     public function cleanupAfterFailure() : void
     {
         parent::cleanupAfterFailure();
         
-        if ($this->uploadedFile)
-            unlink($this->uploadedFile->getPath());
+        if ($this->uploadedFilePath)
+        {
+            $s3 = Storage::disk('s3');
+            $s3->delete($this->uploadedFilePath);
+        }
     }
 }
 ```
