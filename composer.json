@@ -1,0 +1,40 @@
+{
+	"name": "nickjbedford/laravel-transactions",
+	"description": "Provides a simple class structure for building complicated transactions in Laravel project that handle failure.",
+	"keywords": [
+		"laravel", "transactions"
+	],
+    "homepage": "https://github.com/nickjbedford/laravel-transactions",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nick Bedford",
+            "email": "nick@nickbedford.com",
+            "homepage": "https://www.nickjbedford.com/",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "YetAnother\\Laravel\\": "src/"
+        }
+    },
+	"autoload-dev": {
+		"psr-4": {
+			"YetAnother\\Tests\\": "tests/"
+		}
+	},
+	"require": {
+		"php": ">=7.4",
+		"laravel/framework": "~8"
+	},
+    "require-dev": {
+        "phpunit/phpunit": "*",
+		"orchestra/testbench": "^6.13"
+    },
+	"scripts": {
+        "post-autoload-dump": [
+            "@php vendor/bin/testbench package:discover --ansi"
+        ]
+    }
+}
