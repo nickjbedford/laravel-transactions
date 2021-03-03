@@ -64,7 +64,7 @@
 		protected abstract function perform(): void;
 
 		/**
-		 * Optionally validates the action before it is performed.
+		 * Validates the transaction before it is performed.
 		 * @throws Throwable
 		 */
 		protected function validate(): void
@@ -72,7 +72,7 @@
 		}
 
 		/**
-		 * This method handles the cleanup of the action's side effects
+		 * Handles the cleanup of the action's side effects
 		 * if the action fails during a transaction. External data or
 		 * changes, such as uploaded files, should be removed or reversed.
 		 */
@@ -86,7 +86,7 @@
 		 */
 		protected function fireEvent()
 		{
-			if ($this->event && $event = $this->createEventInstance())
+			if ($this->event && $event = $this->createEvent())
 				event($event);
 		}
 		
@@ -96,7 +96,7 @@
 		 * @throws Exception
 		 * @throws ReflectionException
 		 */
-		protected function createEventInstance()
+		protected function createEvent()
 		{
 			$method = new ReflectionMethod($this->event, '__construct');
 			$params = $method->getParameters();

@@ -48,7 +48,16 @@ or changes to external services, this method should be overridden
 to do so. The subclass should maintain a list of reversible actions
 it may need to take, such as file paths to delete on failure.
 
-## Transaction Example
+## Transaction Examples
+
+The following is an example of a transaction that not only has to
+create a new record in the database, it must also upload a file to
+Amazon's S3 storage service.
+
+In the case one or either processes fail, the database changes will
+automatically be rolled back by the base class, but it is up to
+the subclass to remove any external side effects, which in this case
+means to delete the file from S3 if the database fails to update.
 
 ```php
 use Illuminate\Http\UploadedFile;
@@ -70,6 +79,18 @@ class UploadAttachmentTransaction extends Transaction
     public function __construct(UploadedFile $file)
     {
         $this->file = $file;
+    }
+    
+    /**
+     * Validates the action before it is performed.
+     * @throws Throwable
+     */
+    protected function validate() : void
+    {
+        $extension = strtolower($this->file->getClientOriginalExtension());
+        
+        if (!in_array($extension, [ 'png', 'jpg', 'jpeg', 'gif' ]))
+            throw new InvalidArgumentException('Uploaded file is not a valid file type.');
     }
     
     /**
@@ -114,6 +135,80 @@ class UploadAttachmentTransaction extends Transaction
             $s3 = Storage::disk('s3');
             $s3->delete($this->uploadedFilePath);
         }
+    }
+}
+```
+
+### Transaction Event Firing
+
+Transactions can additionally fire an event when they complete successfully.
+To specify the type of event class to fire, override the `$event` property
+as follows. The event will be fired after the database transaction has
+committed and no exceptions have been thrown.
+
+#### Define Transaction Event
+
+```php
+namespace App\Events;
+
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+use YetAnother\Laravel\Transaction;
+
+/**
+ * This event is fired after the transaction completes.
+ */
+class TransactionComplete
+{
+    use Dispatchable, SerializesModels;
+    
+    public function __construct(Transaction $transaction)
+    {
+        //
+    }
+}
+```
+
+#### Specify Event Class To Fire
+
+```php
+use YetAnother\Laravel\Transaction;
+use App\Events\TransactionComplete;
+
+class EventFiringTransaction extends Transaction
+{
+    protected ?string $event = TransactionComplete::class; 
+    
+    protected function perform() : void
+    {
+        // 
+    }
+}
+```
+
+By default, this will try to pass the transaction instance to the
+event's constructor if it accepts a parameter. If you wish to
+create a custom event for dispatch, override the `createEventInstance()`
+method as follows:
+
+```php
+use YetAnother\Laravel\Transaction;
+use App\Events\TransactionComplete;
+
+class EventFiringTransaction extends Transaction
+{
+    protected function perform() : void
+    {
+        // 
+    }
+    
+    /**
+     * Create a custom event to dispatch. 
+     * @return mixed
+     */
+    protected function createEvent()
+    {
+        return new TransactionComplete($this);
     }
 }
 ```
