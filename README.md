@@ -1,17 +1,46 @@
 # Transactions for Laravel
 
-Provides structure for building complicated transactions in
-Laravel project that handle failure. By deriving from the
-`YetAnother\Laravel\Transaction` abstract class and implementing
-the `perform()` and optional `validate()`  and `cleanupAfterFailure()`
-methods, you can write complicated transactional actions that
-maintain integrity of state not only within the database, but
-in external systems as well.
+Laravel Transactions provides a class structure for building
+complicated transactions in Laravel project that handle failure.
+
+By deriving from the `YetAnother\Laravel\Transaction` abstract
+class and implementing the `perform()` and optional `validate()`
+and `cleanupAfterFailure()` methods, you can write complicated
+transactional actions that maintain integrity of state not
+only within the database, but in external systems as well.
 
 For example, when dealing with file uploads, your `Transaction`
 subclass should maintain a list of successfully uploaded files
-that can be deleted when the `cleanupAfterFailure()` method is
+that should be deleted when the `cleanupAfterFailure()` method is
 called by the base class in the case of an exception.
+
+## Brief Overview
+
+This library provides two abstract classes you can derive from to
+implement transactional database-related processes that may
+cause external side effects that require cleanup when errors
+occur, such as file uploads to a storage service.
+
+These classes are:
+
+```php
+// Used by business logic to perform transactional changes.
+abstract class YetAnother\Laravel\Transaction
+
+// Used by controllers to wrap [ request -> transaction -> response ] processes.
+abstract class YetAnother\Laravel\Http\TransactionResponder
+```
+
+It also provides two artisan commands to make new subclasses of
+these base classes.
+
+```shell
+php artisan make:transaction CustomTransaction
+php artisan make:responder CustomTransactionResponder
+```
+
+These generated classes are placed in the `app/Transactions`
+and `app/Http/Responders` project directories.
 
 ## Installation
 
