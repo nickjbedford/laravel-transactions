@@ -47,13 +47,13 @@
 			try
 			{
 				DB::transaction(fn() => $this->validateAndPerform());
-				$this->fireEvent();
 			}
 			catch(Throwable $exception)
 			{
 				$this->cleanupAfterFailure();
 				throw $exception;
 			}
+			$this->fireEvent();
 			return $this;
 		}
 

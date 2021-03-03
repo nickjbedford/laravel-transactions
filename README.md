@@ -78,6 +78,23 @@ Exceptions should be thrown by both the subclass' implementations
 of the `validate()` and `perform()` methods to rollback and cleanup
 the transactions changes.
 
+```php
+public function execute(): self
+{
+    try
+    {
+        DB::transaction(fn() => $this->validateAndPerform());
+    }
+    catch(Throwable $exception)
+    {
+        $this->cleanupAfterFailure();
+        throw $exception;
+    }
+    $this->fireEvent();
+    return $this;
+}
+```
+
 ### `protected function validate() { }`
 
 This is an optional override and allows the transaction to separate
