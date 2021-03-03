@@ -13,9 +13,34 @@ subclass should maintain a list of successfully uploaded files
 that can be deleted when the `cleanupAfterFailure()` method is
 called by the base class in the case of an exception.
 
+## Installation
+
+To install Laravel Transactions into your Laravel project,
+bring up a terminal and run the following command:
+
+    composer require nickjbedford/laravel-transactions
+
+This will add the package to your Composer package file and
+download the package to the projec's vendor folder.
+
+### Laravel Transactions Service Provider
+
+To automatically register the package's artisan commands
+`make:transaction` and `make:responder`, add the
+`YetAnother\Laravel\Providers\TransactionsServiceProvider`
+class to your project's `config/app.php` file in the `providers` array.
+
+```php
+'providers' => [
+    // ...
+    
+    \YetAnother\Laravel\Providers\TransactionsServiceProvider::class,
+],
+```
+
 ## Transaction Execution Process
 
-When `execute()` is called, a Laravel `DB` transaction context
+When `$transaction->execute()` is called, a Laravel `DB` transaction context
 is established that will catch any thrown exceptions and roll back
 the changes to the database. External cleanup is handled as well,
 if implemented correctly.
@@ -209,6 +234,73 @@ class EventFiringTransaction extends Transaction
     protected function createEvent()
     {
         return new TransactionComplete($this);
+    }
+}
+```
+
+## Transaction Responders
+
+Due to Laravel's automatic response handling, it's possible
+for a controller method to return an object and for the 
+request to be handled and transacted into a response
+automically using the `TransactionResponder` base class.
+
+Transaction Responders can almost be considered the
+"executing view" of a Transaction when used in the context
+of a controller action.
+
+For example, a controller's store method can return a
+transaction responder designed to create a model from
+a request then provide the correct response.
+
+```php
+use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+
+class ModelController extends Controller
+{
+    /**
+     * Stores the model and redirects to the show action.
+     * @param Request $request
+     * @return Responsable
+     */
+    public function store(Request $request): Responsable
+    {
+        return new CreateModelTransactionResponder();    
+    }
+}
+```
+
+Laravel and the `TransactionResponder` class does the
+rest by asking the responder for a transaction to execute.
+
+Once the transaction is successful, the response is requested
+from the subclass. This could be a JSON response, a redirect
+or any other type of valid Laravel response.
+
+```php
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+use YetAnother\Laravel\Http\TransactionResponder;
+use YetAnother\Laravel\Transaction;
+use App\Transactions\CreateModelTransaction;
+
+class CreateModelTransactionResponder extends TransactionResponder
+{
+    protected function getResponseAfterExecution(Transaction $transaction): Response
+    {
+        /** @var CreateModelTransaction $transaction */
+        $redirectTo = route('model.show', [ 'model' => $transaction->model->id ]);
+        return redirect($redirectTo);
+    }
+    
+    protected function createTransaction(Request $request): Transaction
+    {
+        $name = trim($request->name);
+        $description = trim($request->description);
+        
+        return new CreateModelTransaction($name, $description);
     }
 }
 ```
