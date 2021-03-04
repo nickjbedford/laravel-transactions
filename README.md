@@ -42,6 +42,8 @@ php artisan make:responder CustomTransactionResponder
 These generated classes are placed in the `app/Transactions`
 and `app/Http/Responders` project directories.
 
+![Transaction Class Flow](docs/transaction-layers.png "Transaction Class Flow")
+
 ## Installation
 
 To install Laravel Transactions into your Laravel project,
