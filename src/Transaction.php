@@ -24,6 +24,12 @@
 		protected ?string $event = null;
 		
 		/**
+		 * @var string|null $lockTableName Specifies the name of the table to
+		 * optionally acquire a lock on for writing.
+		 */
+		protected ?string $lockTableName = null;
+		
+		/**
 		 * Performs the action.
 		 * @throws Throwable
 		 * @return static
@@ -33,6 +39,25 @@
 			$this->validate();
 			$this->perform();
 			return $this;
+		}
+		
+		/**
+		 * @throws Throwable
+		 */
+		private function lockTableIfNecessary()
+		{
+			if (!$this->lockTableName)
+				return;
+			
+			DB::raw("LOCK TABLES `$this->lockTableName` WRITE");
+		}
+		
+		private function unlockTableIfNecessary()
+		{
+			if (!$this->lockTableName)
+				return;
+			
+			DB::raw("UNLOCK TABLES");
 		}
 
 		/**
@@ -46,12 +71,17 @@
 		{
 			try
 			{
+				$this->lockTableIfNecessary();
 				DB::transaction(fn() => $this->validateAndPerform());
 			}
 			catch(Throwable $exception)
 			{
 				$this->cleanupAfterFailure();
 				throw $exception;
+			}
+			finally
+			{
+				$this->unlockTableIfNecessary();
 			}
 			$this->fireEvent();
 			return $this;
