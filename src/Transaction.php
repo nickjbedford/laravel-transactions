@@ -9,6 +9,7 @@
 	use ReflectionMethod;
 	use ReflectionNamedType;
 	use Throwable;
+	use YetAnother\Laravel\Contracts\ITransactionSideEffect;
 	
 	/**
 	 * Represents the base class for a potentially complex or distributed
@@ -28,6 +29,12 @@
 		 * optionally acquire a lock on for writing.
 		 */
 		protected ?string $lockTableName = null;
+		
+		/**
+		 * @var ITransactionSideEffect[] $sideEffects Specifies the list of side effects to be
+		 * reverted upon failure of the transaction.
+		 */
+		private array $sideEffects = [];
 		
 		/**
 		 * Performs the action.
@@ -59,6 +66,15 @@
 			
 			DB::raw("UNLOCK TABLES");
 		}
+		
+		/**
+		 * Adds a side effect to the transaction.
+		 * @param ITransactionSideEffect $sideEffect
+		 */
+		protected function addSideEffect(ITransactionSideEffect $sideEffect)
+		{
+			array_push($this->sideEffects, $sideEffect);
+		}
 
 		/**
 		 * Executes the transaction inside a database transaction context. If an
@@ -76,6 +92,7 @@
 			}
 			catch(Throwable $exception)
 			{
+				$this->revertSideEffects();
 				$this->cleanupAfterFailure();
 				throw $exception;
 			}
@@ -99,6 +116,16 @@
 		 */
 		protected function validate(): void
 		{
+		}
+		
+		/**
+		 * Reverts all side effects in the transaction.
+		 * @throws Throwable
+		 */
+		private function revertSideEffects(): void
+		{
+			while($sideEffect = array_pop($this->sideEffects))
+				$sideEffect->revert();
 		}
 
 		/**
