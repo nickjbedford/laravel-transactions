@@ -33,6 +33,7 @@
 		{
 			TransactionFired::$instances = [];
 			$transaction = new EventFiringTransaction();
+			$this->assertFalse($transaction->finally);
 			
 			$transaction->execute();
 			$event = TransactionFired::$instances[$transaction->eventKey] ?? null;
@@ -40,6 +41,7 @@
 			$this->assertNotNull($event);
 			$this->assertSame($event->transaction, $transaction);
 			$this->assertTrue($event->listenedTo);
+			$this->assertTrue($transaction->finally);
 		}
 		
 		function testSideEffectsAreReverted()

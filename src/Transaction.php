@@ -99,6 +99,7 @@
 			finally
 			{
 				$this->unlockTableIfNecessary();
+				$this->finally();
 			}
 			$this->fireEvent();
 			return $this;
@@ -115,6 +116,14 @@
 		 * @throws Throwable
 		 */
 		protected function validate(): void
+		{
+		}
+
+		/**
+		 * Executes any post-transaction operations regardless of the success or failure of the transaction.
+		 * @throws Throwable
+		 */
+		protected function finally(): void
 		{
 		}
 		
