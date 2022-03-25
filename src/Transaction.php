@@ -51,7 +51,7 @@
 		/**
 		 * @throws Throwable
 		 */
-		private function lockTableIfNecessary()
+		protected function lockTableIfNecessary()
 		{
 			if (!$this->lockTableName)
 				return;
@@ -59,7 +59,7 @@
 			DB::raw("LOCK TABLES `$this->lockTableName` WRITE");
 		}
 		
-		private function unlockTableIfNecessary()
+		protected function unlockTableIfNecessary()
 		{
 			if (!$this->lockTableName)
 				return;
@@ -73,8 +73,20 @@
 		 */
 		protected function addSideEffect(ITransactionSideEffect $sideEffect)
 		{
-			array_push($this->sideEffects, $sideEffect);
+			$this->sideEffects[] = $sideEffect;
 		}
+		
+		/**
+		 * Executes before the transaction is started.
+		 * @return void
+		 */
+		protected function beforeTransaction() { }
+		
+		/**
+		 * Executes after the transaction is committed or rolled back.
+		 * @return void
+		 */
+		protected function afterTransaction() { }
 
 		/**
 		 * Executes the transaction inside a database transaction context. If an
@@ -88,6 +100,7 @@
 			try
 			{
 				$this->lockTableIfNecessary();
+				$this->beforeTransaction();
 				DB::transaction(fn() => $this->validateAndPerform());
 			}
 			catch(Throwable $exception)
@@ -98,6 +111,7 @@
 			}
 			finally
 			{
+				$this->afterTransaction();
 				$this->unlockTableIfNecessary();
 				$this->finally();
 			}
