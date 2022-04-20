@@ -80,22 +80,36 @@ Exceptions should be thrown by both the subclass' implementations
 of the `validate()` and `perform()` methods to rollback and cleanup
 the transactions changes.
 
+Optional methods have been added to allow for detailed processing of a
+transaction's flow outside the `DB` transaction itself.
+
 ```php
 public function execute(): self
 {
     try
     {
+        $this->lockTableIfNecessary();
+        $this->beforeTransaction();
         DB::transaction(fn() => $this->validateAndPerform());
     }
     catch(Throwable $exception)
     {
+        $this->revertSideEffects();
         $this->cleanupAfterFailure();
         throw $exception;
+    }
+    finally
+    {
+        $this->afterTransaction();
+        $this->unlockTableIfNecessary();
+        $this->finally();
     }
     $this->fireEvent();
     return $this;
 }
 ```
+
+### Primary Virtual Methods
 
 ### `protected function validate() { }`
 
@@ -113,6 +127,7 @@ necessary. Database changes are committed or rolled back automatically,
 however if an exception is thrown, external side effects must be cleaned
 up by the `cleanupAfterFailure()` method.
 
+### Secondary Virtual Methods
 
 ### `protected function cleanupAfterFailure() { }`
 
@@ -120,6 +135,18 @@ To handled cleanup of transaction side effects such as file uploads
 or changes to external services, this method should be overridden
 to do so. The subclass should maintain a list of reversible actions
 it may need to take, such as file paths to delete on failure.
+
+### `protected function beforeTransaction/afterTransaction() { }`
+
+To perform custom processing before and after the transaction
+regardless of success or failure, the `beforeTransaction()` and
+`afterTransaction()` methods should be overriden.
+
+### `protected function finally() { }`
+
+To perform code in the `finally` block after all other processing
+regardless of success or failure, after all other methods,
+override the `finally()` method.
 
 ## Transaction Examples
 
