@@ -210,7 +210,7 @@ class UploadAttachmentTransaction extends Transaction
         $s3 = Storage::disk('s3');
         
         if ($s3->put($this->file, $path))
-            {$this->uploadedFilePath = $path;}
+            $this->uploadedFilePath = $path;
     }
     
     protected function createAttachment(): void
@@ -363,6 +363,11 @@ use App\Transactions\CreateModelTransaction;
 
 class CreateModelTransactionResponder extends TransactionResponder
 {
+    /**
+     * Creates the appropriate response for a successful transaction. 
+     * @param Transaction $transaction
+     * @return Response
+     */
     protected function getResponseAfterExecution(Transaction $transaction): Response
     {
         /** @var CreateModelTransaction $transaction */
@@ -370,12 +375,34 @@ class CreateModelTransactionResponder extends TransactionResponder
         return redirect($redirectTo);
     }
     
+    /**
+     * Creates the desired transaction from an incoming request. TransactionResponder
+     * will execute this transaction. 
+     * @param Request $request
+     * @return Transaction
+     */
     protected function createTransaction(Request $request): Transaction
     {
         $name = trim($request->name);
         $description = trim($request->description);
         
         return new CreateModelTransaction($name, $description);
+    }
+    
+    /**
+     * Overrides the response to return when a transaction fails with an exception.
+     * By default, this throws the exception onto Laravel's handling mechanisms, but
+     * this could be used to return a structured JSON response or other custom response. 
+     * @param Throwable $exception
+     * @return Response
+     */
+    protected function exceptionToResponse(Throwable $exception) : Response
+    {
+        return response()->json([
+            'status' => false,
+            'error' => $exception->getMessage(),
+            'code' => $exception->getCode()
+        ]);
     }
 }
 ```
