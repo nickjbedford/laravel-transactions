@@ -95,7 +95,7 @@
 		 * @throws Throwable
 		 * @return static
 		 */
-		public function execute(): self
+		public function execute()
 		{
 			try
 			{
