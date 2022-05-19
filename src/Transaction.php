@@ -92,8 +92,9 @@
 		 * Executes the transaction inside a database transaction context. If an
 		 * exception is thrown, the database transaction is rolled back and cleanup
 		 * is performed to undo any external side effects.
-		 * @throws Throwable
 		 * @return static
+		 * @throws Throwable
+		 * @noinspection PhpMissingReturnTypeInspection
 		 */
 		public function execute()
 		{
@@ -107,7 +108,7 @@
 			{
 				$this->revertSideEffects();
 				$this->cleanupAfterFailure();
-				throw $exception;
+				$this->throw($exception);
 			}
 			finally
 			{
@@ -168,6 +169,18 @@
 		{
 			if ($this->event && $event = $this->createEvent())
 				event($event);
+		}
+		
+		/**
+		 * Throws the exception after all processes have reverted. If the exception needs to be handled in
+		 * another way, this can be overriden.
+		 * @param Throwable $exception
+		 * @return mixed
+		 * @throws Throwable
+		 */
+		protected function throw(Throwable $exception)
+		{
+			throw $exception;
 		}
 		
 		/**
