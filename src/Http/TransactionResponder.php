@@ -19,7 +19,7 @@
 		private ?Transaction $transaction;
 		private ?Response $response = null;
 
-		public function __construct(Transaction $transaction = null)
+		public function __construct(?Transaction $transaction = null)
 		{
 			$this->transaction = $transaction;
 		}
