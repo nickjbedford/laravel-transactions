@@ -51,6 +51,15 @@
 		 * @return mixed
 		 */
 		abstract protected function getResponseAfterExecution(Transaction $transaction): Response;
+		
+		/**
+		 * Optionally validates the request before the transaction is created.
+		 * @param Request $request
+		 * @return void
+		 */
+		protected function validateRequest(Request $request)
+		{
+		}
 
 		/**
 		 * @param Request $request
@@ -74,6 +83,7 @@
 		 */
 		private function executeTransaction(Request $request): void
 		{
+			$this->validateRequest($request);
 			$this->transaction ??= $this->createTransaction($request);
 			$this->transaction->execute();
 		}
