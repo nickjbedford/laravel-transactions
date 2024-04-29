@@ -103,6 +103,7 @@
 				$this->lockTableIfNecessary();
 				$this->beforeTransaction();
 				DB::transaction(fn() => $this->validateAndPerform());
+				$this->afterTransaction();
 			}
 			catch(Throwable $exception)
 			{
@@ -112,7 +113,6 @@
 			}
 			finally
 			{
-				$this->afterTransaction();
 				$this->unlockTableIfNecessary();
 				$this->finally();
 			}
