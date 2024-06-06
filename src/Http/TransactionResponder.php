@@ -81,7 +81,7 @@
 		 * @param Request $request
 		 * @throws Throwable
 		 */
-		private function executeTransaction(Request $request): void
+		protected function executeTransaction(Request $request): void
 		{
 			$this->validateRequest($request);
 			$this->transaction ??= $this->createTransaction($request);
