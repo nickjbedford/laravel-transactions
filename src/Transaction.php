@@ -83,6 +83,18 @@
 		protected function beforeTransaction() { }
 		
 		/**
+		 * Executes after the transaction is started.
+		 * @return void
+		 */
+		protected function prepareTransaction() { }
+		
+		/**
+		 * Executes before the transaction is committed.
+		 * @return void
+		 */
+		protected function beforeCommit() { }
+		
+		/**
 		 * Executes after the transaction is committed or rolled back.
 		 * @return void
 		 */
@@ -102,7 +114,13 @@
 			{
 				$this->lockTableIfNecessary();
 				$this->beforeTransaction();
-				DB::transaction(fn() => $this->validateAndPerform());
+				DB::transaction(function ()
+				{
+					$this->prepareTransaction();
+					$result = $this->validateAndPerform();
+					$this->beforeCommit();
+					return $result;
+				});
 				$this->afterTransaction();
 			}
 			catch(Throwable $exception)
